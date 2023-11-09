@@ -63,7 +63,7 @@ bestEUPublisher: str = __MISSING_IMPLEMENTATION__
 
 bestEUPublisherSales: DataFrame = __MISSING_IMPLEMENTATION__
 
-print(f"The publisher with the highest total video game sales in European Union is: ´{bestEUPublisher}'")
+print(f"The publisher with the highest total video game sales in European Union is: '{bestEUPublisher}'")
 print("Sales data for the publisher:")
 bestEUPublisherSales.show(10)
 
@@ -142,7 +142,7 @@ shotsDF: DataFrame = __MISSING_IMPLEMENTATION__
 # MAGIC
 # MAGIC All games had at least some shots but there are some games that did not have any goals either in the regulation 60 minutes or in the extra time.
 # MAGIC
-# MAGIC Note, that for a couple of games there might be some shots, including goal-scoring ones, that are missing from the original dataset. For example, there might be a game with a final scoreline of 3-4 but only 6 of the goal-scoring shots are included in the dataset. Your solution does not have to try to take these rare occassions of missing data into account. I.e., you can do all the tasks with the assumption that there is no missing or invalid data included.
+# MAGIC Note, that for a couple of games there might be some shots, including goal-scoring ones, that are missing from the original dataset. For example, there might be a game with a final scoreline of 3-4 but only 6 of the goal-scoring shots are included in the dataset. Your solution does not have to try to take these rare occasions of missing data into account. I.e., you can do all the tasks with the assumption that there is no missing or invalid data included.
 # MAGIC
 
 # COMMAND ----------
@@ -301,7 +301,7 @@ print(f"    Points: {worstRegularTeam2022Dict.get('points')}")
 # MAGIC
 # MAGIC The additional task 1 will be considered in the grading for every group based on their solutions for the basic tasks.
 # MAGIC
-# MAGIC The additional tasks 2 and 3 are separe tasks that do not relate to any other task in the assignment. The solutions used in these other additional tasks do not affect the grading of additional task 1. Instead, a good use of optimized methods can positively affect the grading of each specific task, while very non-optimized solutions can have a negative effect on the task grade.
+# MAGIC The additional tasks 2 and 3 are separate tasks that do not relate to any other task in the assignment. The solutions used in these other additional tasks do not affect the grading of additional task 1. Instead, a good use of optimized methods can positively affect the grading of each specific task, while very non-optimized solutions can have a negative effect on the task grade.
 # MAGIC
 
 # COMMAND ----------
@@ -316,7 +316,7 @@ print(f"    Points: {worstRegularTeam2022Dict.get('points')}")
 # MAGIC - Consider using explicit schemas when dealing with CSV data sources.
 # MAGIC - Consider only including those columns from a data source that are actually needed.
 # MAGIC - Filter unnecessary rows whenever possible to get smaller datasets.
-# MAGIC - Avoid collect or similar exensive operations for large datasets.
+# MAGIC - Avoid collect or similar extensive operations for large datasets.
 # MAGIC - Consider using explicit caching if some data frame is used repeatedly.
 # MAGIC - Avoid unnecessary shuffling (for example sorting) operations.
 # MAGIC
@@ -408,7 +408,7 @@ averageWordLengths.show()
 # MAGIC %md
 # MAGIC ## Additional Task 3 - K-Means clustering (2 points)
 # MAGIC
-# MAGIC You are given a dataset containing the locations of building in Finland. The dataset is a subset from [https://www.avoindata.fi/data/en_GB/dataset/postcodes/resource/3c277957-9b25-403d-b160-b61fdb47002f](https://www.avoindata.fi/data/en_GB/dataset/postcodes/resource/3c277957-9b25-403d-b160-b61fdb47002f) limited to only postal codes with the first two numbers in the interval 30-44 ([postal codes in Finland](https://www.posti.fi/en/zip-code-search/postal-codes-in-finland)). The dataset is in the [Shared container](https://portal.azure.com/#view/Microsoft_Azure_Storage/ContainerMenuBlade/~/overview/storageAccountId/%2Fsubscriptions%2Fe0c78478-e7f8-429c-a25f-015eae9f54bb%2FresourceGroups%2Ftuni-cs320-f2023-rg%2Fproviders%2FMicrosoft.Storage%2FstorageAccounts%2Ftunics320f2023gen2/path/shared/etag/%220x8DBB0695B02FFFE%22/defaultEncryptionScope/%24account-encryption-key/denyEncryptionScopeOverride~/false/defaultId//publicAccessVal/None) at folder `assignment/buildings.parquet`. 
+# MAGIC You are given a dataset containing the locations of building in Finland. The dataset is a subset from [https://www.avoindata.fi/data/en_GB/dataset/postcodes/resource/3c277957-9b25-403d-b160-b61fdb47002f](https://www.avoindata.fi/data/en_GB/dataset/postcodes/resource/3c277957-9b25-403d-b160-b61fdb47002f) limited to only postal codes with the first two numbers in the interval 30-44 ([postal codes in Finland](https://www.posti.fi/en/zip-code-search/postal-codes-in-finland)). The dataset is in the [Shared container](https://portal.azure.com/#view/Microsoft_Azure_Storage/ContainerMenuBlade/~/overview/storageAccountId/%2Fsubscriptions%2Fe0c78478-e7f8-429c-a25f-015eae9f54bb%2FresourceGroups%2Ftuni-cs320-f2023-rg%2Fproviders%2FMicrosoft.Storage%2FstorageAccounts%2Ftunics320f2023gen2/path/shared/etag/%220x8DBB0695B02FFFE%22/defaultEncryptionScope/%24account-encryption-key/denyEncryptionScopeOverride~/false/defaultId//publicAccessVal/None) at folder `assignment/buildings.parquet`.
 # MAGIC
 # MAGIC [K-Means clustering](https://en.wikipedia.org/wiki/K-means_clustering) algorithm is an unsupervised machine learning algorithm that can be used to partition the input data into k clusters. Your task is to use the Spark ML library to and its K-Means clusterization algorithm to divide the buildings into clusters using the building coordinates `latitude_wgs84` and `longitude_wgs84` as the basis of the clusterization. You should implement the following procedure:
 # MAGIC
