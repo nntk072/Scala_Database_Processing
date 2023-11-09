@@ -10,6 +10,12 @@ Importable Databricks notebooks for the assignment:
 
 - [Assignment with Scala](Assignment-scala.scala)
 - [Assignment with Python](Assignment-python.py)
+- [Example outputs](Assignment-example-outputs.scala)
+
+Locally viewable documents:
+
+- [Task instructions](Assignment-tasks.md)
+- [Example outputs](Assignment-example-outputs.md)
 
 For local development (without Databricks):
 
