@@ -4,7 +4,9 @@ This repository contains the starting code for the group assignment in the cours
 
 Read-only Databricks notebooks at the Databricks environment:
 
-TODO: add links
+- [Assignment with Scala](https://adb-5736551434993186.6.azuredatabricks.net/?o=5736551434993186#notebook/1232130715573224)
+- [Assignment with Python](https://adb-5736551434993186.6.azuredatabricks.net/?o=5736551434993186#notebook/1232130715573225)
+- [Example outputs](https://adb-5736551434993186.6.azuredatabricks.net/?o=5736551434993186#notebook/1232130715573226)
 
 Importable Databricks notebooks for the assignment:
 
