@@ -17,9 +17,9 @@
 // MAGIC Example output from the task:
 // MAGIC - - - - - - - - - - - - - - -
 // MAGIC
+// MAGIC ```text
 // MAGIC The publisher with the highest total video game sales in European Union is: ´Nintendo'
 // MAGIC Sales data for the publisher:
-// MAGIC ```text
 // MAGIC +----+--------+------------+
 // MAGIC |Year|EU_Total|Global_Total|
 // MAGIC +----+--------+------------+
@@ -159,8 +159,8 @@
 // MAGIC
 // MAGIC Some hints about the task:
 // MAGIC
-// MAGIC - It might be helpful to do the task in parts. For example, first calculating the points from each math, then calculating whether it was win/loss, and finally doing the aggregation operations.
-// MAGIC - The seasons 2011-2016 had 30 teams, seasons 2017-2020 had 31 teams, and seasons 2021-2022 had teams. Thus, the final data frame `regularSeasonDF` should have `368` rows. (6\*30+4\*31+2\*32)
+// MAGIC - It might be helpful to do the task in parts. For example, first calculating the points from each game, then calculating whether it was win/loss, and finally doing the aggregation operations.
+// MAGIC - The seasons 2011-2016 had 30 teams, seasons 2017-2020 had 31 teams, and seasons 2021-2022 had 32 teams. Thus, the final data frame `regularSeasonDF` should have `368` rows. (6\*30+4\*31+2\*32)
 // MAGIC - Your data frame might have the rows in a different order but at least the following data should be included in `regularSeasonDF`:
 // MAGIC
 // MAGIC ```text
@@ -260,7 +260,7 @@
 // MAGIC
 // MAGIC - There should be `728103` lines in the raw text collection of the English articles.
 // MAGIC - There should be `714745` lines in the raw text collection of the Finnish articles.
-// MAGIC - Your numbers might not be exactly the same as given below but should give an indication on whether you have understood the word cleaning task in the way the task creator intended:
+// MAGIC - Your numbers might not be exactly the same as given below but they should give an indication on whether you have understood the word cleaning task in the way the task creator intended:
 // MAGIC     - A total of `2423149` words were found from after cleaning from the English articles. From these `114698` were distinct words.
 // MAGIC     - A total of `1394751` words were found from after cleaning from the Finnish articles. From these `241146` were distinct words.
 // MAGIC     - The number of distinct words indicate that a lot "made-up" words are included in the count. However, in this task any further cleaning is not necessary.

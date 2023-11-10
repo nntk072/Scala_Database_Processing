@@ -14,7 +14,7 @@ The other basic tasks (basic tasks 2-7) are all related and deal with data from 
 
 ## Additional tasks (optional, can provide course points)
 
-There a total of three additional tasks that can be done to gain some course points.
+There are in total of three additional tasks that can be done to gain some course points.
 
 The first additional task asks you to do all the basic tasks in an optimized way. It is possible that you can some points from this without directly trying by just implementing the basic tasks in an efficient manner.
 
@@ -97,11 +97,11 @@ The following columns should be included in the final data frame for this task:
 
 All games had at least some shots but there are some games that did not have any goals either in the regulation 60 minutes or in the extra time.
 
-Note, that for a couple of games there might be some shots, including goal-scoring ones, that are missing from the original dataset. For example, there might be a game with a final scoreline of 3-4 but only 6 of the goal-scoring shots are included in the dataset. Your solution does not have to try to take these rare occasions of missing data into account. I.e., you can do all the tasks with the assumption that there is no missing or invalid data included.
+Note, that for a couple of games there might be some shots, including goal-scoring ones, that are missing from the original dataset. For example, there might be a game with a final scoreline of 3-4 but only 6 of the goal-scoring shots are included in the dataset. Your solution does not have to try to take these rare occasions of missing data into account. I.e., you can do all the tasks with the assumption that there are no missing or invalid data.
 
 ## Basic Task 4 - Game wins during playoff seasons
 
-Create a data frame that uses the game data frame from the basic task 3 and contains aggregated number of wins and losses for each team and for each playoff season, i.e. for games which have been marked as playoff games.
+Create a data frame that uses the game data frame from the basic task 3 and contains aggregated number of wins and losses for each team and for each playoff season, i.e. for games which have been marked as playoff games. Only teams that have played in at least one playoff game in the considered season should be included in the final data frame.
 
 The following columns should be included in the final data frame:
 
@@ -113,7 +113,9 @@ The following columns should be included in the final data frame:
 | wins           | integer     | Number of wins in playoff games the team had in the given season |
 | losses         | integer     | Number of losses in playoff games the team had in the given season |
 
-Playoff games where a team scored more goals than their opponent are considered winning games. And playoff games where a team scored less goals than the opponent are considered losing games. In real life there should not be any playoff games where the final score line was even but due to some missing shot data you might end up with a couple of playoff games that seems to have ended in a draw. For this "drawn" playoff games you can leave them out from win/loss calculations.
+Playoff games where a team scored more goals than their opponent are considered winning games. And playoff games where a team scored less goals than the opponent are considered losing games.
+
+In real life there should not be any playoff games where the final score line was even but due to some missing shot data you might end up with a couple of playoff games that seems to have ended up in a draw. These possible "drawn" playoff games can be left out from the win/loss calculations.
 
 ## Basic Task 5 - Best playoff teams
 
@@ -190,7 +192,7 @@ A couple of things to consider (**NOT** even close to a complete list):
 - Consider using explicit schemas when dealing with CSV data sources.
 - Consider only including those columns from a data source that are actually needed.
 - Filter unnecessary rows whenever possible to get smaller datasets.
-- Avoid collect or similar extensive operations for large datasets.
+- Avoid collect or similar expensive operations for large datasets.
 - Consider using explicit caching if some data frame is used repeatedly.
 - Avoid unnecessary shuffling (for example sorting) operations.
 
@@ -217,9 +219,9 @@ The final goal of the task is to get the answers to following questions:
 For a word to be included in the calculations, it should fulfill the following requirements:
 
 - Capitalization is to be ignored. I.e., words "English", "ENGLISH", and "english" are all to be considered as the same word "english".
-- An English word should only contain the 26 letters from the alphabet of Modern English. Only exception is that punctuation marks, i.e. hyphens `-`, are allowed in the middle of the words as long as there are no two punctuation marks without any letters between them.
+- An English word should only contain the 26 letters from the alphabet of Modern English. Only exception is that punctuation marks, i.e. hyphens `-`, are allowed in the middle of the words as long as there are no two consecutive punctuation marks without any letters between them.
 - The only allowed 1-letter English words are `a` and `i`.
-- A Finnish word should follow the same rules as English words, except that three additional letters, `å`, `ä`, and `ö`, are also allowed, and that no 1-letter words are allowed. Also, any word that contains "`wiki`" should not be considered as Finnish words.
+- A Finnish word should follow the same rules as English words, except that three additional letters, `å`, `ä`, and `ö`, are also allowed, and that no 1-letter words are allowed. Also, any word that contains "`wiki`" should not be considered as Finnish word.
 
 Some hints:
 
@@ -232,17 +234,17 @@ Some hints:
 
 You are given a dataset containing the locations of building in Finland. The dataset is a subset from [https://www.avoindata.fi/data/en_GB/dataset/postcodes/resource/3c277957-9b25-403d-b160-b61fdb47002f](https://www.avoindata.fi/data/en_GB/dataset/postcodes/resource/3c277957-9b25-403d-b160-b61fdb47002f) limited to only postal codes with the first two numbers in the interval 30-44 ([postal codes in Finland](https://www.posti.fi/en/zip-code-search/postal-codes-in-finland)). The dataset is in the [Shared container](https://portal.azure.com/#view/Microsoft_Azure_Storage/ContainerMenuBlade/~/overview/storageAccountId/%2Fsubscriptions%2Fe0c78478-e7f8-429c-a25f-015eae9f54bb%2FresourceGroups%2Ftuni-cs320-f2023-rg%2Fproviders%2FMicrosoft.Storage%2FstorageAccounts%2Ftunics320f2023gen2/path/shared/etag/%220x8DBB0695B02FFFE%22/defaultEncryptionScope/%24account-encryption-key/denyEncryptionScopeOverride~/false/defaultId//publicAccessVal/None) at folder `assignment/buildings.parquet`.
 
-[K-Means clustering](https://en.wikipedia.org/wiki/K-means_clustering) algorithm is an unsupervised machine learning algorithm that can be used to partition the input data into k clusters. Your task is to use the Spark ML library to and its K-Means clusterization algorithm to divide the buildings into clusters using the building coordinates `latitude_wgs84` and `longitude_wgs84` as the basis of the clusterization. You should implement the following procedure:
+[K-Means clustering](https://en.wikipedia.org/wiki/K-means_clustering) algorithm is an unsupervised machine learning algorithm that can be used to partition the input data into k clusters. Your task is to use the Spark ML library and its K-Means clusterization algorithm to divide the buildings into clusters using the building coordinates `latitude_wgs84` and `longitude_wgs84` as the basis of the clusterization. You should implement the following procedure:
 
 1. Start with all the buildings in the dataset.
 2. Divide the buildings into seven clusters with K-Means algorithm using `k=7` and the longitude and latitude of the buildings.
-3. Find the cluster to which the Sähkötalo building from the Hervanta campus is sorted into. The building id for the Sähkötalo in the dataset is `102363858X`.
+3. Find the cluster to which the Sähkötalo building from the Hervanta campus is sorted into. The building id for Sähkötalo in the dataset is `102363858X`.
 4. Choose all the buildings from the cluster with the Sähkötalo building.
 5. Find the cluster center for the chosen cluster of buildings.
 6. Calculate the largest distance from a building in the chosen cluster to the chosen cluster center. You are given a function `haversine` that you can use to calculate the distance between two points using the latitude and longitude of the points.
-7. While the largest distance from a building in the considered buildings to their cluster center is larger than 3 kilometers run the K-Means algorithm again using the following substeps.
+7. While the largest distance from a building in the considered cluster to the cluster center is larger than 3 kilometers run the K-Means algorithm again using the following substeps.
     - Run the K-Means algorithm to divide the remaining buildings into smaller clusters. The number of the new clusters should be one less than in the previous run of the algorithm (but should always be at least two). I.e., the sequence of `k` values starting from the second run should be 6, 5, 4, 3, 2, 2, ...
-    - After using the algorithm choose the new cluster of buildings that includes the Sähkötalo building.
+    - After using the algorithm again, choose the new smaller cluster of buildings so that it includes the Sähkötalo building.
     - Find the center of this cluster and calculate the largest distance from a building in this cluster to its center.
 
 As the result of this process, you should get a cluster of buildings that includes the Sähkötalo building and in which all buildings are within 3 kilometers of the cluster center.
@@ -254,5 +256,5 @@ Using the final cluster, find the answers to the following questions:
 
 Some hints:
 
-- Once you have trained a KMeansModel, the coordinates for the cluster centers, and the individual cluster indexes can be accessed through the model object (`clusterCenters`, `summary.predictions`).
+- Once you have trained a KMeansModel, the coordinates for the cluster centers, and the cluster indexes for individual buildings can be accessed through the model object (`clusterCenters`, `summary.predictions`).
 - The given haversine function for calculating distances can be used with data frames if you turn it into an user defined function.
