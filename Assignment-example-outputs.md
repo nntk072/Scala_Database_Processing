@@ -218,46 +218,50 @@ No special hints for this task other than those that have already been given in 
 
 ## Additional Task 2
 
+*Updated* on 23.11.2023 with some new word count and other output values.
+
 Some hints about the task:
 
 - There should be `728103` lines in the raw text collection of the English articles.
 - There should be `714745` lines in the raw text collection of the Finnish articles.
 - Your numbers might not be exactly the same as given below but they should give an indication on whether you have understood the word cleaning task in the way the task creator intended:
-    - A total of `2423149` words were found from after cleaning from the English articles. From these `114698` were distinct words.
-    - A total of `1394751` words were found from after cleaning from the Finnish articles. From these `241146` were distinct words.
+    - A total of `2423148` words were found from after cleaning from the English articles. From these `114700` were distinct words.
+        - With an alternate way to determine the English words, the numbers were `2153257` words with `96340` distinct ones.
+    - A total of `1394751` words were found from after cleaning from the Finnish articles. From these `241147` were distinct words.
+        - With an alternate way to determine the Finnish words, the numbers were `1226734` words with `205992` distinct ones.
     - The number of distinct words indicate that a lot "made-up" words are included in the count. However, in this task any further cleaning is not necessary.
 
-Example output from the task:
+Example output from the task (possible alternative values given on the right, they would not be part of the normal output):
 - - - - - - - - - - - - - - -
 
 ```text
 The ten most common English words that appear in the English articles:
 +----+------+
-|word| count|
+|word| count|             alternative counts
 +----+------+
-| the|161631|
-|  of| 85770|
-| and| 68132|
-|  in| 62938|
-|  to| 48409|
-|   a| 43486|
-| was| 22860|
-|  by| 18914|
-|  as| 18684|
-| for| 17182|
+| the|161631|                    160326
+|  of| 85770|                     85631
+| and| 68132|                     67710
+|  in| 62938|                     62056
+|  to| 48409|                     48227
+|   a| 43486|                     42126
+| was| 22860|                     22767
+|  by| 18914|                     18810
+|  as| 18684|                     18449
+| for| 17182|                     16928
 +----+------+
 ```
 
 ```text
 The five most common 5-letter Finnish words that appear in the Finnish articles:
 +-----+-----+
-| word|count|
+| word|count|             alternative counts
 +-----+-----+
-|mutta| 3567|
-|hänen| 2054|
-|jonka| 1873|
-|jossa| 1635|
-|ollut| 1614|
+|mutta| 3567|                      3560
+|hänen| 2054|                      2052
+|jonka| 1873|                      1865
+|jossa| 1635|                      1631
+|ollut| 1614|                      1565
 +-----+-----+
 ```
 
@@ -265,10 +269,10 @@ The five most common 5-letter Finnish words that appear in the Finnish articles:
 The longest word appearing at least 150 times is 'yhdysvaltalainen'
 The average word lengths:
 +--------+-------------------+
-|language|average_word_length|
+|language|average_word_length|             alternative average lengths
 +--------+-------------------+
-| Finnish|               7.85|
-| English|               5.26|
+| Finnish|               7.85|                          7.75
+| English|               5.26|                          5.13
 +--------+-------------------+
 ```
 
