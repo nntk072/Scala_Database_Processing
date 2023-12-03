@@ -441,7 +441,19 @@ val finnishStr: String = "Finnish"
 
 // COMMAND ----------
 
-val commonWordsEn: DataFrame = ???
+val commonWordsEn: DataFrame = spark.read.textFile("abfss://shared@tunics320f2023gen2.dfs.core.windows.net/assignment/wikipedia/en")
+  .flatMap(line => line.split(whiteSpace))
+  .map(word => word.toLowerCase.replaceAll("[^a-z-]", ""))
+  .map(word => word.replaceAll(s"-${punctuationMark}", ""))
+  .filter(word => word.length > 0 && !word.contains(twoPunctuationMarks))
+  .filter(word => word.forall(englishLetters.contains(_)))
+  .filter(word => word.length > 1 || allowedEnglishOneLetterWords.contains(word))
+  .groupBy("value")
+  .count()
+  .withColumnRenamed("value", "word")
+  .sort(desc("count"))
+  .limit(10)
+  .cache()
 
 println("The ten most common English words that appear in the English articles:")
 commonWordsEn.show()
@@ -449,23 +461,75 @@ commonWordsEn.show()
 
 // COMMAND ----------
 
-val common5LetterWordsFi: DataFrame = ???
-
+val common5LetterWordsFi: DataFrame = spark.read.textFile("abfss://shared@tunics320f2023gen2.dfs.core.windows.net/assignment/wikipedia/fi")
+  .flatMap(line => line.split(whiteSpace))
+  .map(word => word.toLowerCase.replaceAll("[^a-zåäö-]", ""))
+  .filter(word => word.length > 0 && !word.contains(twoPunctuationMarks))
+  .filter(word => word.forall(finnishLetters.contains(_)))
+  .filter(word => word.length > 1 && !word.contains(wikiStr))
+  .groupBy("value")
+  .count()
+  .withColumnRenamed("value", "word")
+  .filter(length(col("word")) === 5)
+  .sort(desc("count"))
+  .limit(5)
+  .cache()
+  
 println("The five most common 5-letter Finnish words that appear in the Finnish articles:")
 common5LetterWordsFi.show()
 
 
 // COMMAND ----------
 
-val longestWord: String = ???
+val longestWord: String = spark.read.textFile("abfss://shared@tunics320f2023gen2.dfs.core.windows.net/assignment/wikipedia/fi")
+  .flatMap(line => line.split(whiteSpace))
+  .map(word => word.toLowerCase.replaceAll("[^a-zåäö-]", ""))
+  .filter(word => word.length > 0 && !word.contains(twoPunctuationMarks))
+  .filter(word => word.forall(finnishLetters.contains(_)))
+  .filter(word => word.length > 1 && !word.contains(wikiStr))
+  .groupBy("value")
+  .count()
+  .filter(col("count") >= 150)
+  .sort(length(col("value")).desc)
+  .limit(1)
+  .first()
+  .getAs[String]("value")
 
 println(s"The longest word appearing at least 150 times is '${longestWord}'")
 
 
-val averageWordLengths: DataFrame = ???
+val averageWordLengths: DataFrame = spark.read.textFile("abfss://shared@tunics320f2023gen2.dfs.core.windows.net/assignment/wikipedia/en")
+  .flatMap(line => line.split(whiteSpace))
+  .map(word => word.toLowerCase.replaceAll("[^a-z-]", ""))
+  .filter(word => word.length > 0 && !word.contains(twoPunctuationMarks))
+  .filter(word => word.length > 1 || allowedEnglishOneLetterWords.contains(word))
+  .map(word => (word, word.length, englishStr)) // Add language here
+  .toDF("word", "length", "language")
+  .groupBy("language")
+  .agg(
+    round(sum(col("length")) / count(col("word")), 2).alias("average_word_length")
+  )
+  .orderBy("language")
+  .cache()
+  .union(
+    spark.read.textFile("abfss://shared@tunics320f2023gen2.dfs.core.windows.net/assignment/wikipedia/fi")
+      .flatMap(line => line.split(whiteSpace))
+      .map(word => word.toLowerCase.replaceAll("[^a-zåäö-]", ""))
+      .filter(word => word.length > 0 && !word.contains(twoPunctuationMarks))
+      .filter(word => word.length > 1 && !word.contains(wikiStr))
+      .map(word => (word, word.length, finnishStr)) // Add language here
+      .toDF("word", "length", "language")
+      .groupBy("language")
+      .agg(
+        round(sum(col("length")) / count(col("word")), 2).alias("average_word_length")
+      )
+      .orderBy("language")
+  )
+  .orderBy(desc("average_word_length"))
 
 println("The average word lengths:")
 averageWordLengths.show()
+
 
 
 // COMMAND ----------
