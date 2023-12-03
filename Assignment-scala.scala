@@ -35,6 +35,7 @@
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.expressions.Window
 
 // COMMAND ----------
 
@@ -207,8 +208,35 @@ gamesDF.show(5)
 
 // COMMAND ----------
 
-val playoffDF: DataFrame = ???
-
+val playoffDF: DataFrame = gamesDF.filter(col("isPlayOffGame") === 1)
+  .withColumn("homeTeamWon", when(col("homeGoals") > col("awayGoals"), 1).otherwise(0))
+  .withColumn("awayTeamWon", when(col("homeGoals") < col("awayGoals"), 1).otherwise(0))
+  .groupBy("season", "homeTeamCode")
+  .agg(
+    countDistinct("game_id").alias("games"),
+    sum("homeTeamWon").alias("wins"),
+    sum("awayTeamWon").alias("losses")
+  )
+  .withColumnRenamed("homeTeamCode", "teamCode")
+  .union(
+    gamesDF.filter(col("isPlayOffGame") === 1)
+      .withColumn("homeTeamWon", when(col("homeGoals") > col("awayGoals"), 1).otherwise(0))
+      .withColumn("awayTeamWon", when(col("homeGoals") < col("awayGoals"), 1).otherwise(0))
+      .groupBy("season", "awayTeamCode")
+      .agg(
+        countDistinct("game_id").alias("games"),
+        sum("awayTeamWon").alias("wins"),
+        sum("homeTeamWon").alias("losses")
+      )
+      .withColumnRenamed("awayTeamCode", "teamCode")
+  )
+  .groupBy("season", "teamCode")
+  .agg(
+    sum("games").alias("games"),
+    sum("wins").alias("wins"),
+    sum("losses").alias("losses")
+  )
+  .orderBy("season", "teamCode")
 
 // COMMAND ----------
 
@@ -232,14 +260,18 @@ val playoffDF: DataFrame = ???
 
 // COMMAND ----------
 
-val bestPlayoffTeams: DataFrame = ???
+val windowSpec = Window.partitionBy("season").orderBy(desc("wins"), desc("losses"))
+val bestPlayoffTeams = playoffDF.withColumn("rank", rank().over(windowSpec))
+  .filter(col("rank") === 1)
+  .drop("rank")
+  .orderBy("season")
 
 bestPlayoffTeams.show()
 
 
 // COMMAND ----------
 
-val bestPlayoffTeam2022: Row = ???
+val bestPlayoffTeam2022 = bestPlayoffTeams.filter(col("season") === 2022).first()
 
 println("Best playoff team in 2022:")
 println(s"    Team: ${bestPlayoffTeam2022.getAs[String]("teamCode")}")
