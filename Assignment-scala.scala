@@ -34,7 +34,7 @@
 
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.Row
-
+import org.apache.spark.sql.functions._
 
 // COMMAND ----------
 
@@ -55,15 +55,36 @@ import org.apache.spark.sql.Row
 
 // COMMAND ----------
 
-val bestEUPublisher: String = ???
+val videoGameDataFrame: DataFrame = spark.read
+  .option("inferSchema", "true")
+  .option("header", "true")
+  .csv("abfss://shared@tunics320f2023gen2.dfs.core.windows.net/assignment/sales/video_game_sales.csv")
 
-val bestEUPublisherSales: DataFrame = ???
+// Print the schema of the DataFrame
+videoGameDataFrame.printSchema()
 
+// COMMAND ----------
+
+// Consider first 10 years 2000-2009
+val firstTenYearsDF = videoGameDataFrame.filter(col("Year").between(2000, 2009))
+
+// COMMAND ----------
+
+val bestEUPublisher: String = firstTenYearsDF.groupBy("Publisher")
+  .sum("EU_Sales").withColumnRenamed("sum(EU_Sales)", "EU_Sales")
+  .sort(desc("EU_Sales"))
+  .select("Publisher")
+  .first().getAs[String]("Publisher")
+
+// Filter the original DataFrame for the best European Union publisher
+val bestEUPublisherSales: DataFrame = firstTenYearsDF.filter(col("Publisher") === bestEUPublisher)
+  .groupBy("Year")
+  .agg(round(sum("EU_Sales"), 2).alias("EU_Total"), round(sum("Global_Sales"), 2).alias("Global_Total"))
+  .sort("Year")
 
 println(s"The publisher with the highest total video game sales in European Union is: '${bestEUPublisher}'")
 println("Sales data for the publisher:")
 bestEUPublisherSales.show(10)
-
 
 // COMMAND ----------
 
@@ -112,8 +133,9 @@ bestEUPublisherSales.show(10)
 
 // COMMAND ----------
 
-val shotsDF: DataFrame = ???
-
+val file_path = "abfss://shared@tunics320f2023gen2.dfs.core.windows.net/assignment/nhl_shots.parquet"
+val shotsDF: DataFrame = spark.read.parquet(file_path)
+println(s"Number of rows in data frame: ${shotsDF.count()}")
 
 // COMMAND ----------
 
@@ -144,8 +166,22 @@ val shotsDF: DataFrame = ???
 
 // COMMAND ----------
 
-val gamesDF: DataFrame = ???
+val columnsSelected = Seq("season", "game_id", "homeTeamCode", "awayTeamCode", "isPlayOffGame", "homeGoals", "awayGoals", "lastGoalTime")
 
+val gamesShotOrderedDF = shotsDF.orderBy("time")
+  .groupBy("game_id", "season", "homeTeamCode", "awayTeamCode", "isPlayOffGame")
+
+val gamesDF: DataFrame = gamesShotOrderedDF
+  .agg(
+    count(when((col("event") === "GOAL") && (col("team") === "HOME"), 1)).alias("homeGoals"),
+    count(when((col("event") === "GOAL") && (col("team") === "AWAY"), 1)).alias("awayGoals"),
+    max(when(col("event") === "GOAL", col("time"))).alias("lastGoalTime")
+  )
+  .na.fill(0)
+  .selectExpr(columnsSelected: _*)
+  .distinct()
+
+gamesDF.show(5)
 
 // COMMAND ----------
 
