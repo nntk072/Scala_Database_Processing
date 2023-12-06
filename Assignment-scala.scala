@@ -320,7 +320,60 @@ println("=========================================================")
 
 // COMMAND ----------
 
-val regularSeasonDF: DataFrame = ???
+val regularSeasonDF: DataFrame = gamesDF.filter(col("isPlayOffGame") === 0)
+  .withColumn("homeTeamWon", when(col("homeGoals") > col("awayGoals"), 1).otherwise(0))
+  .withColumn("awayTeamWon", when(col("homeGoals") < col("awayGoals"), 1)
+                              .when(col("homeGoals") === col("awayGoals"), 1)
+                              .otherwise(0))
+  .withColumn("points", when(col("homeGoals") > col("awayGoals") && col("lastGoalTime")/60 < 60, 3)
+                        .when(col("homeGoals") > col("awayGoals") && col("lastGoalTime")/60 > 60, 2)
+                        .when(col("homeGoals") < col("awayGoals") && col("lastGoalTime")/60 > 60, 1)
+                        .when(col("homeGoals") === col("awayGoals"), 1)
+                        .otherwise(0))
+  .groupBy("season", "homeTeamCode")
+  .agg(
+    countDistinct("game_id").alias("games"),
+    sum("homeTeamWon").alias("wins"),
+    sum("awayTeamWon").alias("losses"),
+    sum("homeGoals").alias("goalsScored"),
+    sum("awayGoals").alias("goalsConceded"),
+    sum("points").alias("points")
+  )
+  .withColumnRenamed("homeTeamCode", "teamCode")
+  .union(
+    gamesDF.filter(col("isPlayOffGame") === 0)
+      .withColumn("homeTeamWon", when(col("homeGoals") > col("awayGoals"), 1)
+                                .when(col("homeGoals") === col("awayGoals"),1)
+                                .otherwise(0))
+      .withColumn("awayTeamWon", when(col("homeGoals") < col("awayGoals"), 1).otherwise(0))
+      .withColumn("points", when(col("homeGoals") < col("awayGoals") && col("lastGoalTime")/60 < 60, 3)
+                        .when(col("homeGoals") < col("awayGoals") && col("lastGoalTime")/60 > 60, 2)
+                        .when(col("homeGoals") > col("awayGoals") && col("lastGoalTime")/60 > 60, 1)
+                        .when(col("homeGoals") === col("awayGoals"), 1)
+                        .otherwise(0))
+      .groupBy("season", "awayTeamCode")
+      .agg(
+        countDistinct("game_id").alias("games"),
+        sum("awayTeamWon").alias("wins"),
+        sum("homeTeamWon").alias("losses"),
+        sum("awayGoals").alias("goalsScored"),
+        sum("homeGoals").alias("goalsConceded"),
+        sum("points").alias("points")
+      )
+      .withColumnRenamed("awayTeamCode", "teamCode")
+  )
+  .groupBy("season", "teamCode")
+  .agg(
+    sum("games").alias("games"),
+    sum("wins").alias("wins"),
+    sum("losses").alias("losses"),
+    sum("goalsScored").alias("goalsScored"),
+    sum("goalsConceded").alias("goalsConceded"),
+    sum("points").alias("points")
+  )
+  .orderBy("season", "teamCode")
+
+regularSeasonDF.show()
 
 
 // COMMAND ----------
@@ -335,14 +388,18 @@ val regularSeasonDF: DataFrame = ???
 
 // COMMAND ----------
 
-val worstRegularTeams: DataFrame = ???
+val windowSpec = Window.partitionBy("season").orderBy(asc("points"))
+val worstRegularTeams: DataFrame = regularSeasonDF.withColumn("rank", rank().over(windowSpec))
+  .filter(col("rank") === 1)
+  .drop("rank")
+  .orderBy("season")
 
 worstRegularTeams.show()
 
 
 // COMMAND ----------
 
-val worstRegularTeam2022: Row = ???
+val worstRegularTeam2022: Row = worstRegularTeams.filter(col("season") === 2022).first()
 
 println("Worst regular season team in 2022:")
 println(s"    Team: ${worstRegularTeam2022.getAs[String]("teamCode")}")
