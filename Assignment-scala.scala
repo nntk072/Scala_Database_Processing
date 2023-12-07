@@ -36,6 +36,7 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.expressions.Window
+import org.apache.spark.sql.types._
 
 // COMMAND ----------
 
@@ -135,7 +136,14 @@ bestEUPublisherSales.show(10)
 // COMMAND ----------
 
 val file_path = "abfss://shared@tunics320f2023gen2.dfs.core.windows.net/assignment/nhl_shots.parquet"
-val shotsDF: DataFrame = spark.read.parquet(file_path)
+val shotsFullColumns: DataFrame = spark.read.parquet(file_path)
+
+// COMMAND ----------
+
+// Drop unnecessary columns from the DataFrame
+
+val columnsDropped = Seq("shotID", "period", "location", "shotType")
+val shotsDF: DataFrame = shotsFullColumns.drop(columnsDropped: _*)
 println(s"Number of rows in data frame: ${shotsDF.count()}")
 
 // COMMAND ----------
@@ -237,6 +245,8 @@ val playoffDF: DataFrame = gamesDF.filter(col("isPlayOffGame") === 1)
     sum("losses").alias("losses")
   )
   .orderBy("season", "teamCode")
+
+playoffDF.show()
 
 // COMMAND ----------
 
@@ -448,6 +458,142 @@ println(s"    Points: ${worstRegularTeam2022.getAs[Long]("points")}")
 // MAGIC
 // MAGIC You can create a text cell below this one and describe what optimizations you have done. This might help the grader to better recognize how skilled your work with the basic tasks has been.
 // MAGIC
+
+// COMMAND ----------
+
+// MAGIC %md
+// MAGIC ## Basic task 1
+// MAGIC
+// MAGIC For this task, we optimize the code by creating a schema for the given CSV structure. By providing the schema explicitly, the underlying data source can skip the schema inference step, and thus speed up data loading. This can lead to improved performance, especially for large datasets.
+
+// COMMAND ----------
+
+val myManualSchema = StructType(Array(
+  StructField("Rank", IntegerType, true),
+  StructField("Name", StringType, true),
+  StructField("Platform", StringType, true),
+  StructField("Year", StringType, true),
+  StructField("Genre", StringType, true),
+  StructField("Publisher", StringType, true),
+  StructField("NA_Sales", DoubleType, true),
+  StructField("EU_Sales", DoubleType, true),
+  StructField("JP_Sales", DoubleType, true),
+  StructField("Other_Sales", DoubleType, true),
+  StructField("Global_Sales", DoubleType, true)
+))
+
+val videoGameDataFrame: DataFrame = spark.read
+  .schema(myManualSchema)
+  .csv("abfss://shared@tunics320f2023gen2.dfs.core.windows.net/assignment/sales/video_game_sales.csv")
+
+// Print the schema of the DataFrame
+videoGameDataFrame.printSchema()
+
+// COMMAND ----------
+
+// MAGIC %md
+// MAGIC ## Basic task 2-7
+// MAGIC
+// MAGIC For task 4 and 6, we use cache instead of gamesDF. Cache persists the data in memory or on disk, reducing the need to recompute the DataFrame from its source data every time it is used. This can lead to significant performance improvements in scenarios where the gamesDF is reused in multiple operations.
+
+// COMMAND ----------
+
+val cachedPlayOffGamesDF = gamesDF.filter(col("isPlayOffGame") === 1).cache()
+
+val playoffDF: DataFrame = cachedPlayOffGamesDF
+  .withColumn("homeTeamWon", when(col("homeGoals") > col("awayGoals"), 1).otherwise(0))
+  .withColumn("awayTeamWon", when(col("homeGoals") < col("awayGoals"), 1).otherwise(0))
+  .groupBy("season", "homeTeamCode")
+  .agg(
+    countDistinct("game_id").alias("games"),
+    sum("homeTeamWon").alias("wins"),
+    sum("awayTeamWon").alias("losses")
+  )
+  .withColumnRenamed("homeTeamCode", "teamCode")
+  .union(
+    cachedPlayOffGamesDF
+      .withColumn("homeTeamWon", when(col("homeGoals") > col("awayGoals"), 1).otherwise(0))
+      .withColumn("awayTeamWon", when(col("homeGoals") < col("awayGoals"), 1).otherwise(0))
+      .groupBy("season", "awayTeamCode")
+      .agg(
+        countDistinct("game_id").alias("games"),
+        sum("awayTeamWon").alias("wins"),
+        sum("homeTeamWon").alias("losses")
+      )
+      .withColumnRenamed("awayTeamCode", "teamCode")
+  )
+  .groupBy("season", "teamCode")
+  .agg(
+    sum("games").alias("games"),
+    sum("wins").alias("wins"),
+    sum("losses").alias("losses")
+  )
+  .orderBy("season", "teamCode")
+cachedPlayOffGamesDF.unpersist()
+playoffDF.show()
+
+// COMMAND ----------
+
+// Explicitly cache the gamesDF after filtering unnecessary rows
+val cachedGamesDF = gamesDF.filter(col("isPlayOffGame") === 0).cache()
+
+val regularSeasonDF: DataFrame = cachedGamesDF
+  .withColumn("homeTeamWon", when(col("homeGoals") > col("awayGoals"), 1).otherwise(0))
+  .withColumn("awayTeamWon", when(col("homeGoals") < col("awayGoals"), 1)
+                              .when(col("homeGoals") === col("awayGoals"), 1)
+                              .otherwise(0))
+  .withColumn("points", when(col("homeGoals") > col("awayGoals") && col("lastGoalTime")/60 < 60, 3)
+                        .when(col("homeGoals") > col("awayGoals") && col("lastGoalTime")/60 > 60, 2)
+                        .when(col("homeGoals") < col("awayGoals") && col("lastGoalTime")/60 > 60, 1)
+                        .when(col("homeGoals") === col("awayGoals"), 1)
+                        .otherwise(0))
+  .groupBy("season", "homeTeamCode")
+  .agg(
+    countDistinct("game_id").alias("games"),
+    sum("homeTeamWon").alias("wins"),
+    sum("awayTeamWon").alias("losses"),
+    sum("homeGoals").alias("goalsScored"),
+    sum("awayGoals").alias("goalsConceded"),
+    sum("points").alias("points")
+  )
+  .withColumnRenamed("homeTeamCode", "teamCode")
+  .union(
+    cachedGamesDF.filter(col("isPlayOffGame") === 0)
+      .withColumn("homeTeamWon", when(col("homeGoals") > col("awayGoals"), 1)
+                                .when(col("homeGoals") === col("awayGoals"),1)
+                                .otherwise(0))
+      .withColumn("awayTeamWon", when(col("homeGoals") < col("awayGoals"), 1).otherwise(0))
+      .withColumn("points", when(col("homeGoals") < col("awayGoals") && col("lastGoalTime")/60 < 60, 3)
+                        .when(col("homeGoals") < col("awayGoals") && col("lastGoalTime")/60 > 60, 2)
+                        .when(col("homeGoals") > col("awayGoals") && col("lastGoalTime")/60 > 60, 1)
+                        .when(col("homeGoals") === col("awayGoals"), 1)
+                        .otherwise(0))
+      .groupBy("season", "awayTeamCode")
+      .agg(
+        countDistinct("game_id").alias("games"),
+        sum("awayTeamWon").alias("wins"),
+        sum("homeTeamWon").alias("losses"),
+        sum("awayGoals").alias("goalsScored"),
+        sum("homeGoals").alias("goalsConceded"),
+        sum("points").alias("points")
+      )
+      .withColumnRenamed("awayTeamCode", "teamCode")
+  )
+  .groupBy("season", "teamCode")
+  .agg(
+    sum("games").alias("games"),
+    sum("wins").alias("wins"),
+    sum("losses").alias("losses"),
+    sum("goalsScored").alias("goalsScored"),
+    sum("goalsConceded").alias("goalsConceded"),
+    sum("points").alias("points")
+  )
+  .orderBy("season", "teamCode")
+
+// Cached DataFrame is no longer needed
+cachedGamesDF.unpersist()
+
+regularSeasonDF.show()
 
 // COMMAND ----------
 
