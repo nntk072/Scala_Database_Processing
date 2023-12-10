@@ -37,6 +37,8 @@ import org.apache.spark.sql.Row
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.types._
+import org.apache.spark.ml.clustering.KMeans
+import org.apache.spark.ml.feature.VectorAssembler
 
 // COMMAND ----------
 
@@ -799,13 +801,61 @@ def haversine(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double = 
 
 // COMMAND ----------
 
-val finalCluster: DataFrame = ???
+val buildingsDF = spark.read.parquet("abfss://shared@tunics320f2023gen2.dfs.core.windows.net/assignment/buildings.parquet")
 
-val clusterBuildingCount: Long = ???
-val clusterHervantaBuildingCount: Long = ???
+val selectedColumns = Seq("latitude_wgs84", "longitude_wgs84")
+val assembler = new VectorAssembler().setInputCols(selectedColumns.toArray).setOutputCol("features")
+val assembledDF = assembler.transform(buildingsDF)
+val haversineUDF = udf((lat: Double, lon: Double) => haversine(lat, lon, clusterCenter(0), clusterCenter(1)))
 
-println(s"Buildings in the final cluster: ${clusterBuildingCount}")
-print(s"Hervanta buildings in the final cluster: ${clusterHervantaBuildingCount} ")
-println(s"(${scala.math.round(10000.0*clusterHervantaBuildingCount/clusterBuildingCount)/100.0}% of all buildings in the final cluster)")
+val kMeans = new KMeans().setK(startK).setSeed(seedValue)
+val kMeansModel = kMeans.fit(assembledDF)
+val sahkotaloCluster = kMeansModel.transform(assembledDF)
+  .filter($"building_id" === hervantaBuildingId)
+  .select("prediction")
+  .first()
+  .getInt(0)
+val clusterBuildings = kMeansModel.transform(assembledDF)
+  .filter($"prediction" === sahkotaloCluster)
+val clusterCenter = kMeansModel.clusterCenters(sahkotaloCluster)
+val distancesDF = clusterBuildings.withColumn("distance", haversineUDF($"latitude_wgs84", $"longitude_wgs84"))
+val maxDistance = distancesDF.agg(max("distance")).first().getDouble(0)
+var currentK = startK-1
+var currentClusterBuildings = clusterBuildings
+currentClusterBuildings = currentClusterBuildings.drop("prediction")
+
+while (currentK >= 2 && maxDistance >= maxAllowedClusterDistance) {
+  val kMeans = new KMeans().setK(currentK).setSeed(seedValue)
+  val kMeansModel = kMeans.fit(currentClusterBuildings)
+  val sahkotaloCluster = kMeansModel.transform(currentClusterBuildings)
+    .filter($"building_id" === hervantaBuildingId)
+    .select("prediction")
+    .first()
+    .getInt(0)
+  currentClusterBuildings.unpersist()
+  val clusterBuildings = kMeansModel.transform(currentClusterBuildings)
+    .filter($"prediction" === sahkotaloCluster)
+  val clusterCenterIteration = kMeansModel.clusterCenters(sahkotaloCluster)
+  val distancesDFIteration = clusterBuildings.withColumn("distance", haversineUDF($"latitude_wgs84", $"longitude_wgs84"))
+  val maxDistance = distancesDFIteration.agg(max("distance")).first().getDouble(0)
+  currentClusterBuildings = clusterBuildings
+  currentClusterBuildings = currentClusterBuildings.drop("prediction")
+  currentK -= 1
+}
+
+
+// COMMAND ----------
+
+// Resulting cluster of buildings
+val finalCluster = currentClusterBuildings
+
+// Count the buildings in the final cluster
+val clusterBuildingCount = finalCluster.count()
+
+// Count the Hervanta buildings in the final cluster
+val clusterHervantaBuildingCount = finalCluster.filter($"postal_code" === hervantaPostalCode).count()
+
+// Print the results
+println(s"Buildings in the final cluster: $clusterBuildingCount")
+println(s"Hervanta buildings in the final cluster: $clusterHervantaBuildingCount (${scala.math.round(10000.0 * clusterHervantaBuildingCount / clusterBuildingCount) / 100.0}% of all buildings in the final cluster)")
 println("===========================================================================================")
-
